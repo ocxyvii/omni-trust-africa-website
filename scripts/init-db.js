@@ -5,38 +5,27 @@
  * Run: node scripts/init-db.js
  */
 
-const { spawn } = require('child_process');
-
-async function runCommand(command, args = []) {
-  return new Promise((resolve, reject) => {
-    const proc = spawn(command, args, {
-      stdio: 'inherit',
-      shell: true,
-    });
-
-    proc.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Command failed with exit code ${code}`));
-      } else {
-        resolve();
-      }
-    });
-
-    proc.on('error', (err) => {
-      reject(err);
-    });
-  });
-}
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 async function main() {
   try {
     console.log('🔧 Setting up database...\n');
 
-    console.log('📦 Generating Prisma client...');
-    await runCommand('npx', ['prisma', 'generate']);
+    // Create .env.local if it doesn't exist
+    const envPath = path.join(process.cwd(), '.env.local');
+    if (!fs.existsSync(envPath)) {
+      const dbUrl = 'file:./prisma/dev.db';
+      fs.writeFileSync(envPath, `DATABASE_URL="${dbUrl}"\n`);
+      console.log('✓ Created .env.local with DATABASE_URL');
+    }
 
-    console.log('\n📝 Running database migrations...');
-    await runCommand('npx', ['prisma', 'migrate', 'dev', '--name', 'init']);
+    console.log('📦 Generating Prisma client...');
+    execSync('npx prisma generate', { stdio: 'inherit' });
+
+    console.log('\n📝 Creating database schema...');
+    execSync('npx prisma db push --skip-generate', { stdio: 'inherit' });
 
     console.log('\n✅ Database setup complete!');
     console.log('\n📚 Next steps:');
