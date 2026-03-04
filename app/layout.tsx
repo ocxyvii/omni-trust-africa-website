@@ -7,8 +7,11 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'OmniTrust Africa - Cybersecurity Solutions',
+  description: 'World-class cybersecurity solutions tailored for businesses across Africa. Penetration testing, vulnerability assessment, compliance, and incident response.',
+  keywords: 'cybersecurity, penetration testing, security audit, compliance, Africa, Kenya',
+  authors: [{ name: 'OmniTrust Africa' }],
+  creator: 'OmniTrust Africa',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -26,6 +29,13 @@ export const metadata: Metadata = {
       },
     ],
     apple: '/apple-icon.png',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://omnitrust.africa',
+    title: 'OmniTrust Africa - Cybersecurity Solutions',
+    description: 'World-class cybersecurity solutions for African businesses',
   },
 }
 
