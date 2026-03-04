@@ -1,0 +1,364 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Authentication Models
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole  @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  engagements   Engagement[]
+  enrollments   Enrollment[]
+  lessonProgress Progress[]
+  leads         Lead[]
+  testimonials  Testimonial[]
+}
+
+enum UserRole {
+  ADMIN
+  CLIENT
+  STUDENT
+  USER
+}
+
+// Service Models
+model Service {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  content     String
+  icon        String?
+  image       String?
+  pricing     Pricing?
+  methodology String?   // JSON string of methodology steps
+  faqs        String?   // JSON string of FAQs
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  engagements Engagement[]
+}
+
+model Pricing {
+  id        String   @id @default(cuid())
+  serviceId String   @unique
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  
+  tier1Name     String
+  tier1Price    Float
+  tier1Features String // JSON array
+
+  tier2Name     String
+  tier2Price    Float
+  tier2Features String // JSON array
+
+  tier3Name     String?
+  tier3Price    Float?
+  tier3Features String? // JSON array
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Engagement & Project Models
+model Engagement {
+  id          String   @id @default(cuid())
+  userId      String
+  serviceId   String
+  status      EngagementStatus @default(PENDING)
+  
+  startDate   DateTime?
+  endDate     DateTime?
+  scope       String? // JSON - project scope details
+  deliverables String? // JSON array
+  budget      Float?
+  
+  user        User     @relation(fields: [userId], references: [id])
+  service     Service  @relation(fields: [serviceId], references: [id])
+  reports     Report[]
+  invoices    Invoice[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum EngagementStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  PAUSED
+  ARCHIVED
+}
+
+model Report {
+  id            String   @id @default(cuid())
+  engagementId  String
+  title         String
+  url           String
+  uploadedAt    DateTime @default(now())
+  
+  engagement    Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+
+  @@index([engagementId])
+}
+
+// Billing & Payment Models
+model Invoice {
+  id              String   @id @default(cuid())
+  engagementId    String
+  amount          Float
+  currency        String  @default("USD")
+  status          InvoiceStatus @default(PENDING)
+  issueDate       DateTime @default(now())
+  dueDate         DateTime
+  paidDate        DateTime?
+  
+  engagement      Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  payments        Payment[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([engagementId])
+}
+
+enum InvoiceStatus {
+  PENDING
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  invoiceId     String
+  provider      PaymentProvider
+  amount        Float
+  currency      String  @default("USD")
+  status        PaymentStatus @default(PENDING)
+  transactionId String?
+  metadata      String? // JSON
+  
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([invoiceId])
+}
+
+enum PaymentProvider {
+  STRIPE
+  FLUTTERWAVE
+  MPESA
+  NOWPAYMENTS
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// Academy & Learning Models
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  content     String
+  level       CourseLevel
+  price       Float
+  image       String?
+  duration    Int? // in hours
+  prerequisites String? // JSON array
+  
+  lessons     Lesson[]
+  enrollments Enrollment[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  courseId  String
+  title     String
+  content   String // MDX or HTML content
+  order     Int
+  videoUrl  String?
+  duration  Int? // in minutes
+  
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress  Progress[]
+
+  @@index([courseId])
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  status    EnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime @default(now())
+  completedAt DateTime?
+  
+  user      User     @relation(fields: [userId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  progress  Progress[]
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  SUSPENDED
+}
+
+model Progress {
+  id          String   @id @default(cuid())
+  enrollmentId String
+  lessonId    String
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  
+  enrollment  Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson      Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId])
+}
+
+// Blog & Content Models
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  content     String // MDX content
+  author      String
+  image       String?
+  tags        String // JSON array
+  published   Boolean @default(false)
+  publishedAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published])
+}
+
+// Lead Management
+model Lead {
+  id              String   @id @default(cuid())
+  name            String
+  email           String
+  phone           String?
+  message         String
+  serviceInterest String?
+  companyName     String?
+  companySize     String?
+  status          LeadStatus @default(NEW)
+  notes           String?
+  
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId          String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL_SENT
+  CONVERTED
+  LOST
+}
+
+// Testimonials & Social Proof
+model Testimonial {
+  id        String   @id @default(cuid())
+  authorId  String?
+  author    String
+  content   String
+  role      String?
+  company   String?
+  image     String?
+  rating    Int? // 1-5
+  
+  user      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
