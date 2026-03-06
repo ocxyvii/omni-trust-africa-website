@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -10,7 +10,7 @@ import {
   Chrome, Linkedin, Mail, Lock, AlertCircle
 } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
@@ -51,126 +51,121 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="li-root">
-      <style>{CSS}</style>
-      <Bg />
-
-      <div className="li-layout">
-        {/* Left panel */}
-        <motion.div className="li-left" initial={{ opacity: 0, x: -32 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-          <Link href="/" className="li-logo">
-            <div className="li-logo-icon"><Shield size={18} color="#22d3ee" /></div>
-            <span>OmniTrust<em>Africa</em></span>
-          </Link>
-          <div className="li-left-body">
-            <h2 className="li-left-title">Welcome back to OmniTrust.</h2>
-            <p className="li-left-sub">
-              Sign in to access your courses, track your progress, and continue your cybersecurity journey.
-            </p>
-            <div className="li-perks">
-              {[
-                'Resume where you left off',
-                'Access your certificates',
-                'View your learning dashboard',
-                'Connect with the community',
-              ].map(p => (
-                <div key={p} className="li-perk">
-                  <div className="li-perk-dot" />
-                  <span>{p}</span>
-                </div>
-              ))}
-            </div>
+    <div className="li-layout">
+      {/* Left panel */}
+      <motion.div className="li-left" initial={{ opacity: 0, x: -32 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+        <Link href="/" className="li-logo">
+          <div className="li-logo-icon"><Shield size={18} color="#22d3ee" /></div>
+          <span>OmniTrust<em>Africa</em></span>
+        </Link>
+        <div className="li-left-body">
+          <h2 className="li-left-title">Welcome back to OmniTrust.</h2>
+          <p className="li-left-sub">
+            Sign in to access your courses, track your progress, and continue your cybersecurity journey.
+          </p>
+          <div className="li-perks">
+            {[
+              'Resume where you left off',
+              'Access your certificates',
+              'View your learning dashboard',
+              'Connect with the community',
+            ].map(p => (
+              <div key={p} className="li-perk">
+                <div className="li-perk-dot" />
+                <span>{p}</span>
+              </div>
+            ))}
           </div>
-          <div className="li-left-footer">
+        </div>
+        <div className="li-left-footer">
+          Don't have an account?{' '}
+          <Link href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`}>Create one free</Link>
+        </div>
+      </motion.div>
+
+      {/* Right panel */}
+      <motion.div className="li-right" initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+        <div className="li-card">
+          <div className="li-card-header">
+            <h1 className="li-card-title">Sign in</h1>
+            <p className="li-card-sub">Good to have you back.</p>
+          </div>
+
+          {/* OAuth */}
+          <div className="li-oauth">
+            <button className="li-oauth-btn" onClick={() => handleOAuth('google')} disabled={!!oauthLoading || loading}>
+              {oauthLoading === 'google' ? <div className="li-spinner" /> : <Chrome size={16} />}
+              Continue with Google
+            </button>
+            <button className="li-oauth-btn" onClick={() => handleOAuth('linkedin')} disabled={!!oauthLoading || loading}>
+              {oauthLoading === 'linkedin' ? <div className="li-spinner" /> : <Linkedin size={16} />}
+              Continue with LinkedIn
+            </button>
+          </div>
+
+          <div className="li-divider"><span>or sign in with email</span></div>
+
+          {/* Error */}
+          <AnimatePresence>
+            {error && (
+              <motion.div className="li-error" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                <AlertCircle size={14} />{error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="li-form">
+            <div className="li-field">
+              <label className="li-label">Email Address</label>
+              <div className="li-input-wrap">
+                <span className="li-input-icon"><Mail size={14} /></span>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="jane@company.com"
+                  required
+                  className="li-input has-icon"
+                />
+              </div>
+            </div>
+
+            <div className="li-field">
+              <div className="li-label-row">
+                <label className="li-label">Password</label>
+                <Link href="/forgot-password" className="li-forgot">Forgot password?</Link>
+              </div>
+              <div className="li-input-wrap">
+                <span className="li-input-icon"><Lock size={14} /></span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Your password"
+                  required
+                  className="li-input has-icon has-suffix"
+                />
+                <button type="button" className="li-eye" onClick={() => setShowPassword(v => !v)}>
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" className="li-submit" disabled={loading || !!oauthLoading}>
+              {loading
+                ? <><div className="li-spinner" /> Signing in…</>
+                : <>Sign In <ArrowRight size={15} /></>
+              }
+            </button>
+          </form>
+
+          <p className="li-signup-link">
             Don't have an account?{' '}
             <Link href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`}>Create one free</Link>
-          </div>
-        </motion.div>
-
-        {/* Right panel */}
-        <motion.div className="li-right" initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-          <div className="li-card">
-            <div className="li-card-header">
-              <h1 className="li-card-title">Sign in</h1>
-              <p className="li-card-sub">Good to have you back.</p>
-            </div>
-
-            {/* OAuth */}
-            <div className="li-oauth">
-              <button className="li-oauth-btn" onClick={() => handleOAuth('google')} disabled={!!oauthLoading || loading}>
-                {oauthLoading === 'google' ? <div className="li-spinner" /> : <Chrome size={16} />}
-                Continue with Google
-              </button>
-              <button className="li-oauth-btn" onClick={() => handleOAuth('linkedin')} disabled={!!oauthLoading || loading}>
-                {oauthLoading === 'linkedin' ? <div className="li-spinner" /> : <Linkedin size={16} />}
-                Continue with LinkedIn
-              </button>
-            </div>
-
-            <div className="li-divider"><span>or sign in with email</span></div>
-
-            {/* Error */}
-            <AnimatePresence>
-              {error && (
-                <motion.div className="li-error" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                  <AlertCircle size={14} />{error}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="li-form">
-              <div className="li-field">
-                <label className="li-label">Email Address</label>
-                <div className="li-input-wrap">
-                  <span className="li-input-icon"><Mail size={14} /></span>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="jane@company.com"
-                    required
-                    className="li-input has-icon"
-                  />
-                </div>
-              </div>
-
-              <div className="li-field">
-                <div className="li-label-row">
-                  <label className="li-label">Password</label>
-                  <Link href="/forgot-password" className="li-forgot">Forgot password?</Link>
-                </div>
-                <div className="li-input-wrap">
-                  <span className="li-input-icon"><Lock size={14} /></span>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Your password"
-                    required
-                    className="li-input has-icon has-suffix"
-                  />
-                  <button type="button" className="li-eye" onClick={() => setShowPassword(v => !v)}>
-                    {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" className="li-submit" disabled={loading || !!oauthLoading}>
-                {loading
-                  ? <><div className="li-spinner" /> Signing in…</>
-                  : <>Sign In <ArrowRight size={15} /></>
-                }
-              </button>
-            </form>
-
-            <p className="li-signup-link">
-              Don't have an account?{' '}
-              <Link href={`/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`}>Create one free</Link>
-            </p>
-          </div>
-        </motion.div>
-      </div>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -184,11 +179,24 @@ function Bg() {
   );
 }
 
+export default function LoginPage() {
+  return (
+    <div className="li-root">
+      <style>{CSS}</style>
+      <Bg />
+      <Suspense fallback={<div className="li-loading" />}>
+        <LoginForm />
+      </Suspense>
+    </div>
+  );
+}
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
 .li-root{min-height:100vh;background:#04060f;color:#e2e8f0;font-family:'DM Sans',sans-serif;position:relative;overflow:hidden;}
+.li-loading{min-height:100vh;background:#04060f;}
 
 .li-bg{position:fixed;inset:0;pointer-events:none;z-index:0;}
 .li-blob{position:absolute;border-radius:50%;filter:blur(120px);}
@@ -199,7 +207,6 @@ const CSS = `
 .li-layout{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;min-height:100vh;}
 @media(max-width:900px){.li-layout{grid-template-columns:1fr;}}
 
-/* Left */
 .li-left{display:flex;flex-direction:column;padding:48px;background:rgba(167,139,250,0.02);border-right:1px solid rgba(255,255,255,0.05);}
 @media(max-width:900px){.li-left{display:none;}}
 .li-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#e2e8f0;font-size:15px;font-weight:600;margin-bottom:auto;}
@@ -215,7 +222,6 @@ const CSS = `
 .li-left-footer a{color:rgba(255,255,255,0.5);text-decoration:none;}
 .li-left-footer a:hover{color:#22d3ee;}
 
-/* Right */
 .li-right{display:flex;align-items:center;justify-content:center;padding:48px 24px;}
 .li-card{width:100%;max-width:400px;}
 .li-card-header{margin-bottom:28px;}
