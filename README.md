@@ -271,9 +271,9 @@ The project is ready for deployment to Vercel:
 ## Support
 
 For questions or issues, contact:
-- Email: info@omnitrust.africa
-- Phone: +254 (0) 711 111 111
-- Website: https://omnitrust.africa
+- Email: zentrixlabs.com@gmail.com
+- Phone: +254 (0) 108655123
+- Website: https://omni-trust-africa-website-n4tp7u6ju.vercel.app/
 
 ## License
 
@@ -281,4 +281,4 @@ Proprietary - All rights reserved
 
 ## Author
 
-Built with v0.app - Vercel's AI-powered code generation platform
+Misheck 
