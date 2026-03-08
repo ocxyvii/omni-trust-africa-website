@@ -20,9 +20,7 @@ function PasswordStrength({ password }: { password: string }) {
   const score = checks.filter(c => c.pass).length;
   const colors = ['#ef4444', '#f59e0b', '#22d3ee', '#34d399'];
   const labels = ['Weak', 'Fair', 'Good', 'Strong'];
-
   if (!password) return null;
-
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="su-strength">
       <div className="su-strength-bars">
@@ -36,8 +34,7 @@ function PasswordStrength({ password }: { password: string }) {
       <div className="su-strength-checks">
         {checks.map(c => (
           <div key={c.label} className={`su-check ${c.pass ? 'pass' : ''}`}>
-            <Check size={10} />
-            {c.label}
+            <Check size={10} />{c.label}
           </div>
         ))}
       </div>
@@ -109,6 +106,7 @@ function SignupForm() {
 
     setLoading(true);
     try {
+      // Register the user
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,20 +120,12 @@ function SignupForm() {
         return;
       }
 
-      const signInResult = await signIn('credentials', {
-        email: form.email,
-        password: form.password,
-        redirect: false,
-      });
-
-      if (signInResult?.error) {
-        setError('Account created! Please sign in.');
-        router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);
-        return;
-      }
-
+      // Show success screen then redirect to login
       setSuccess(true);
-      setTimeout(() => router.push(callbackUrl), 1500);
+      setTimeout(() => {
+        router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}&registered=true`);
+      }, 2000);
+
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -155,14 +145,13 @@ function SignupForm() {
           <Check size={32} color="#34d399" />
         </div>
         <h2>Account created!</h2>
-        <p>Welcome to OmniTrust Africa. Redirecting you now…</p>
+        <p>Welcome to OmniTrust Africa.<br />Taking you to sign in…</p>
       </motion.div>
     );
   }
 
   return (
     <div className="su-layout">
-      {/* Left panel */}
       <motion.div className="su-left" initial={{ opacity: 0, x: -32 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
         <Link href="/" className="su-logo">
           <div className="su-logo-icon"><Shield size={18} color="#22d3ee" /></div>
@@ -186,7 +175,6 @@ function SignupForm() {
         </div>
       </motion.div>
 
-      {/* Right panel */}
       <motion.div className="su-right" initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
         <div className="su-card">
           <div className="su-card-header">
@@ -210,8 +198,7 @@ function SignupForm() {
           <AnimatePresence>
             {error && (
               <motion.div className="su-error" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-                <AlertCircle size={14} />
-                {error}
+                <AlertCircle size={14} />{error}
               </motion.div>
             )}
           </AnimatePresence>
@@ -373,7 +360,7 @@ const CSS = `
 .su-success{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:24px;}
 .su-success-icon{width:72px;height:72px;border-radius:50%;background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);display:flex;align-items:center;justify-content:center;}
 .su-success h2{font-family:'Bricolage Grotesque',sans-serif;font-size:32px;font-weight:800;color:#f1f5f9;}
-.su-success p{font-size:15px;color:rgba(255,255,255,0.35);}
+.su-success p{font-size:15px;color:rgba(255,255,255,0.35);line-height:1.7;}
 
 input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 30px #0a0f1a inset !important;-webkit-text-fill-color:#f1f5f9 !important;caret-color:#f1f5f9;}
 `;

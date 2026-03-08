@@ -7,13 +7,14 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Eye, EyeOff, Shield, ArrowRight,
-  Chrome, Linkedin, Mail, Lock, AlertCircle
+  Chrome, Linkedin, Mail, Lock, AlertCircle, CheckCircle
 } from 'lucide-react';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const registered = searchParams.get('registered') === 'true';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -90,6 +91,21 @@ function LoginForm() {
             <h1 className="li-card-title">Sign in</h1>
             <p className="li-card-sub">Good to have you back.</p>
           </div>
+
+          {/* Success banner from signup */}
+          <AnimatePresence>
+            {registered && (
+              <motion.div
+                className="li-success"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <CheckCircle size={14} />
+                Account created successfully! Sign in below.
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* OAuth */}
           <div className="li-oauth">
@@ -227,6 +243,8 @@ const CSS = `
 .li-card-header{margin-bottom:28px;}
 .li-card-title{font-family:'Bricolage Grotesque',sans-serif;font-size:32px;font-weight:800;color:#f8fafc;letter-spacing:-0.02em;margin-bottom:6px;}
 .li-card-sub{font-size:14px;color:rgba(255,255,255,0.3);}
+
+.li-success{display:flex;align-items:center;gap:8px;padding:12px 14px;border-radius:10px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);color:#6ee7b7;font-size:13px;margin-bottom:20px;overflow:hidden;}
 
 .li-oauth{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
 .li-oauth-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.6);font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;}
